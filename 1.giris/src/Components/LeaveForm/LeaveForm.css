@@ -1,0 +1,94 @@
+body {
+    overflow-y: auto; 
+}
+
+.izin-formu-container {
+    width: 80%; 
+    margin: 20px;
+    background-color: white; 
+    padding: 10px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    overflow-y: auto;
+    max-height: 90vh; 
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.izin-formu {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; 
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center; 
+    margin-bottom: 10px;
+    width: 200px; 
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; 
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center; 
+    margin-bottom: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px; 
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 10px;
+}
