@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import "./LeaveForm.css";
@@ -233,4 +234,5 @@ const LeaveForm = ({ handleViewChange }) => {
     );
 };
 
+LeaveForm.propTypes = { handleViewChange: PropTypes.func.isRequired };
 export default LeaveForm;

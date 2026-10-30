@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import "./ChangeUserInfo.css";
 import api from "../../api";
@@ -47,4 +48,5 @@ const ChangeUserInfo = ({ handleViewChange }) => {
         </div>
     );
 };
+ChangeUserInfo.propTypes = { handleViewChange: PropTypes.func.isRequired };
 export default ChangeUserInfo;

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import "./Menu.css";
 
 const Menu = ({ isAdmin, handleViewChange }) => {
@@ -20,4 +21,5 @@ const Menu = ({ isAdmin, handleViewChange }) => {
         </div>
     );
 };
+Menu.propTypes = { isAdmin: PropTypes.bool.isRequired, handleViewChange: PropTypes.func.isRequired };
 export default Menu;

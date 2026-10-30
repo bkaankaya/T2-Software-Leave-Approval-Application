@@ -25,7 +25,6 @@ import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.*;
-import org.springframework.security.oauth2.core.validator.OAuth2TokenValidator;
 
 @Configuration
 public class SecurityConfig {
