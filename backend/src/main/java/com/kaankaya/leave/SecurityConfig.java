@@ -1,5 +1,6 @@
 package com.kaankaya.leave;
 
+import jakarta.servlet.DispatcherType;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -67,6 +68,7 @@ public class SecurityConfig {
             .cors(cors -> {})
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/login", "/api/login/register").permitAll()
                 .requestMatchers("/api/admin/approve-leaves", "/api/admin/reject-leaves", "/api/leave/leaves").hasRole("ADMIN")

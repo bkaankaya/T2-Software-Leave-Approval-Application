@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiErrors {
@@ -17,6 +18,11 @@ public class ApiErrors {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Map<String, String>> validation(MethodArgumentNotValidException ex) {
         return ResponseEntity.badRequest().body(Map.of("message", "Invalid or missing input fields"));
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    ResponseEntity<Map<String, String>> status(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message",
+            ex.getReason() == null ? "Request denied" : ex.getReason()));
     }
     @ExceptionHandler(DataIntegrityViolationException.class)
     ResponseEntity<Map<String, String>> conflict(DataIntegrityViolationException ex) {
