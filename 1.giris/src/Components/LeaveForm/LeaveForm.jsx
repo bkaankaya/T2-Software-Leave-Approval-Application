@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
+import { calculateLeaveDuration, LEAVE_HOURLY_SLOTS } from "../../utils/leaveDuration";
 import "./LeaveForm.css";
 
 const LeaveForm = ({ handleViewChange }) => {
@@ -22,18 +23,13 @@ const LeaveForm = ({ handleViewChange }) => {
     const [busy, setBusy] = useState(false);
     const navigate = useNavigate();
 
-    const saatAraliklari = ["08:00 - 10:00", "10:00 - 12:00", "12:00 - 14:00", "14:00 - 16:00", "16:00 - 18:00", "18:00 - 20:00"];
-
     useEffect(() => {
-        let calculated = "";
-        if (formData.izinTuru === "MAZARET_IZIN") {
-            if (formData.izinSaatAraligi) calculated = "2";
-        } else if (formData.baslangicTarihi && formData.bitisTarihi) {
-            const first = Date.parse(formData.baslangicTarihi + "T00:00:00Z");
-            const last = Date.parse(formData.bitisTarihi + "T00:00:00Z");
-            const days = Math.round((last - first) / 86400000) + 1;
-            if (days > 0 && days <= 366) calculated = String(days);
-        }
+        const calculated = calculateLeaveDuration(
+            formData.izinTuru,
+            formData.baslangicTarihi,
+            formData.bitisTarihi,
+            formData.izinSaatAraligi,
+        );
         setFormData((previous) => previous.izinSuresi === calculated ? previous : {
             ...previous, izinSuresi: calculated,
         });
@@ -179,7 +175,7 @@ const LeaveForm = ({ handleViewChange }) => {
                         <label>İzin Saat Aralığı:</label>
                         <select name="izinSaatAraligi" value={formData.izinSaatAraligi} onChange={handleChange} style={{ width: "100%" }}>
                             <option value="">Saat aralığı seçin</option>
-                            {saatAraliklari.map((aralik, index) => (
+                            {LEAVE_HOURLY_SLOTS.map((aralik, index) => (
                                 <option key={index} value={aralik}>
                                     {aralik}
                                 </option>

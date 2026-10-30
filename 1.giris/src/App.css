@@ -1,34 +1,17 @@
-.admin-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh; /* Ekranı kaplayan tam sayfa görünüm */
-  background-color: #f0f0f0; /* Daha açık bir arka plan rengi */
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Hafif bir gölge */
-  border-radius: 10px; /* Köşeleri yuvarlatır */
+.session-message {
+  width: min(440px, calc(100vw - 32px));
+  margin: 24px auto;
+  padding: 28px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
+  text-align: center;
 }
-
-.admin-menu h1 {
-  font-size: 2.5rem; /* Daha büyük ve kalın başlık */
-  color: #333; /* Başlık rengi */
-  margin-bottom: 30px;
-  text-transform: uppercase; 
-}
-
-.admin-menu button {
-  padding: 15px 30px;
-  font-size: 1.2rem;
-  color: white;
-  background-color: #007bff;
+.session-message h2 { margin-bottom: 12px; }
+.session-message p { margin-bottom: 16px; }
+.session-message button {
+  padding: 12px 18px;
+  background: #2e7657;
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 20px; /* Üstten boşluk ekler */
-}
-
-.admin-menu button:hover {
-  background-color: #0056b3; /* Buton hover rengi */
 }
