@@ -1,7 +1,7 @@
 
 .wrapper {
     position: relative;
-    width: 420px;
+    width: min(420px, calc(100vw - 24px));
     height: 450px;
     background: seagreen; 
     border-radius: 10px;
@@ -19,11 +19,11 @@
 
 .wrapper .form-box {
     width: 100%;
-    padding: 40px;
+    padding: clamp(18px, 6vw, 40px);
 }
 .wrapper.active .form-box.login{
     transition: none;
-    translate: -400px;
+    translate: -100%;
 }
 .wrapper .form-box.login{
     transition: translate .18s ease;
@@ -32,7 +32,7 @@
 .wrapper .form-box.register{
     position: absolute;
     transition: none;
-    translate: 400px;
+    translate: 100%;
 }
 .wrapper.active .form-box.register{
     transition: translate .18s ease;

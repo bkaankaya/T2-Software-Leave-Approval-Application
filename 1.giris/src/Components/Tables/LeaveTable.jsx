@@ -17,13 +17,18 @@ const LeaveTable = ({ isAdmin, handleViewChange }) => {
             const url = isAdmin ? "/leave/leaves" : `/leave/${encodeURIComponent(username)}`;
             const response = await api.get(url);
             setLeaves(response.data);
+            setSelected((old) => old.filter((id) => response.data.some((leave) => leave.id === id && leave.durum === "Beklemede")));
             setError("");
         } catch (e) {
             setError(e.response?.data?.message || "İzinler yüklenemedi.");
         }
     }, [isAdmin]);
 
-    useEffect(() => { reload(); }, [reload]);
+    useEffect(() => {
+        reload();
+        const timer = setInterval(reload, 30000);
+        return () => clearInterval(timer);
+    }, [reload]);
 
     const filtered = useMemo(() => leaves.filter((leave) =>
         (!typeFilter || leave.izinTuru === typeFilter) &&
@@ -49,7 +54,8 @@ const LeaveTable = ({ isAdmin, handleViewChange }) => {
 
     return (
         <div className="izin-tablosu-container">
-            <h2>{isAdmin ? "Tüm İzin Tablosu" : "İzinlerim"}</h2>
+            <div className="table-heading"><h2>{isAdmin ? "Tüm İzin Tablosu" : "İzinlerim"}</h2>
+                <button type="button" onClick={reload} disabled={busy}>Yenile</button></div>
             {isAdmin && <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                 <input aria-label="Personele göre filtrele" placeholder="Personel ara" value={query} onChange={(e) => setQuery(e.target.value)} />
                 <select aria-label="İzin türü filtresi" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
@@ -59,7 +65,7 @@ const LeaveTable = ({ isAdmin, handleViewChange }) => {
             </div>}
             {error && <p role="alert" style={{ color: "red" }}>{error}</p>}
             <div style={{ overflowX: "auto" }}>
-                <table>
+                <table className="izin-tablosu">
                     <thead><tr>
                         <th>Ad–Soyad</th><th>Tarih</th><th>İzin Türü</th><th>Başlangıç Tarihi</th><th>Bitiş Tarihi</th><th>İzin Süresi</th><th>İzin Gerekçesi</th><th>Durum</th>
                         {isAdmin && <th>Seç</th>}

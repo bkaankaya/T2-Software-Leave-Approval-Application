@@ -5,6 +5,8 @@ import java.util.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -24,7 +26,7 @@ public class LeaveController {
     public record FormInput(LocalDate tarih, @NotBlank String izinTuru,
         LocalDate baslangicTarihi, LocalDate bitisTarihi,
         String izinSaatAraligi, @NotBlank @Size(max = 200) String izinGerekcesi) {}
-    public record Ids(@NotEmpty List<Long> leaveIds) {}
+    public record Ids(@NotEmpty @Size(max = 100) List<@NotNull @Positive Long> leaveIds) {}
     public record Person(String username) {}
     public record LeaveView(Long id, Person personnel, LocalDate tarih, String izinTuru,
         LocalDate baslangicTarihi, LocalDate bitisTarihi,
@@ -51,8 +53,10 @@ public class LeaveController {
         if (input.izinGerekcesi().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Leave reason is required");
         }
+        boolean hourly = "MAZARET_IZIN".equals(input.izinTuru());
         LeaveRequest leave = new LeaveRequest(user, input.tarih(), input.izinTuru(),
-            input.baslangicTarihi(), input.bitisTarihi(), input.izinSaatAraligi(),
+            hourly ? null : input.baslangicTarihi(), hourly ? null : input.bitisTarihi(),
+            hourly ? input.izinSaatAraligi() : null,
             daysOrHours, input.izinGerekcesi().trim());
         return LeaveView.of(leaves.saveAndFlush(leave));
     }
@@ -91,8 +95,10 @@ public class LeaveController {
         if (found.stream().anyMatch(leave -> leave.getStatus() != LeaveRequest.Status.PENDING)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Only pending requests can be updated");
         }
-        found.forEach(leave -> leave.setStatus(newStatus));
-        leaves.saveAll(found);
-        return Map.of("updated", found.size());
+        int updated = leaves.updatePendingBatch(input.leaveIds(), LeaveRequest.Status.PENDING, newStatus);
+        if (updated != input.leaveIds().size()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A leave was changed concurrently; refresh and try again");
+        }
+        return Map.of("updated", updated);
     }
 }

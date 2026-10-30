@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.datasource.url=jdbc:h2:mem:integration;DB_CLOSE_DELAY=-1",
     "spring.jpa.hibernate.ddl-auto=create-drop",
+    "app.jwt.secret=dGVzdC1vbmx5LWNpLWtleS1maXh0dXJlLTAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbg==",
     "app.admin.username=testadmin",
     "app.admin.password=SecureAdminPassword1234!",
     "app.admin.email=admin@test.invalid"

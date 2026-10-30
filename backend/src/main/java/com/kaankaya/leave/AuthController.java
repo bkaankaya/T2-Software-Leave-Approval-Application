@@ -7,6 +7,7 @@ import java.util.Map;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -33,7 +34,7 @@ public class AuthController {
         this.issuer = issuer; this.ttl = ttl;
     }
 
-    public record Register(@NotBlank @Size(max = 80) String username,
+    public record Register(@NotBlank @Pattern(regexp = "[A-Za-z0-9._-]{3,80}") String username,
         @NotBlank @Email @Size(max = 254) String email,
         @NotBlank @Size(min = 8, max = 128) String password) {}
     public record Credentials(@NotBlank String username, @NotBlank String password) {}
@@ -43,7 +44,8 @@ public class AuthController {
     @PostMapping("/login/register")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> register(@Valid @RequestBody Register input) {
-        String name = input.username().trim(), email = input.email().trim();
+        String name = input.username().trim();
+        String email = input.email().trim().toLowerCase(java.util.Locale.ROOT);
         if (users.existsById(name) || users.existsByEmailIgnoreCase(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username or email already exists");
         }
@@ -69,7 +71,9 @@ public class AuthController {
 
     @GetMapping("/auth/verify-token")
     public Map<String, Object> verify(Authentication auth) {
-        return Map.of("username", auth.getName(), "valid", true);
+        UserAccount user = users.findById(auth.getName()).orElseThrow();
+        return Map.of("username", auth.getName(), "valid", true,
+            "adminControl", user.getRole() == UserAccount.Role.ADMIN);
     }
 
     @PutMapping("/users/{username}/update-password")

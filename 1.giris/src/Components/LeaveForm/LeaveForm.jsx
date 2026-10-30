@@ -19,39 +19,24 @@ const LeaveForm = ({ handleViewChange }) => {
     });
     const [error, setError] = useState("");
     const [validationError, setValidationError] = useState("");
+    const [busy, setBusy] = useState(false);
     const navigate = useNavigate();
 
     const saatAraliklari = ["08:00 - 10:00", "10:00 - 12:00", "12:00 - 14:00", "14:00 - 16:00", "16:00 - 18:00", "18:00 - 20:00"];
 
     useEffect(() => {
-        if (formData.izinTuru === "MAZARET_IZIN" && formData.izinSaatAraligi) {
-            const [baslangicSaati, bitisSaati] = formData.izinSaatAraligi.split(" - ");
-            const baslangic = new Date(`1970-01-01T${baslangicSaati}:00`);
-            const bitis = new Date(`1970-01-01T${bitisSaati}:00`);
-            const fark = (bitis - baslangic) / (1000 * 60 * 60);
-            setFormData((prevData) => ({
-                ...prevData,
-                izinSuresi: fark.toFixed(2).toString(),
-            }));
+        let calculated = "";
+        if (formData.izinTuru === "MAZARET_IZIN") {
+            if (formData.izinSaatAraligi) calculated = "2";
         } else if (formData.baslangicTarihi && formData.bitisTarihi) {
-            const baslangic = new Date(formData.baslangicTarihi);
-            const bitis = new Date(formData.bitisTarihi);
-            const timeDiff = bitis - baslangic;
-
-            const izinSuresi = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1;
-
-            if (izinSuresi > 0) {
-                setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    izinSuresi: izinSuresi.toString(),
-                }));
-            } else {
-                setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    izinSuresi: "",
-                }));
-            }
+            const first = Date.parse(formData.baslangicTarihi + "T00:00:00Z");
+            const last = Date.parse(formData.bitisTarihi + "T00:00:00Z");
+            const days = Math.round((last - first) / 86400000) + 1;
+            if (days > 0 && days <= 366) calculated = String(days);
         }
+        setFormData((previous) => previous.izinSuresi === calculated ? previous : {
+            ...previous, izinSuresi: calculated,
+        });
     }, [formData.izinSaatAraligi, formData.baslangicTarihi, formData.bitisTarihi, formData.izinTuru]);
 
     useEffect(() => {
@@ -99,8 +84,11 @@ const LeaveForm = ({ handleViewChange }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (busy) return;
+        setValidationError("");
+        setError("");
 
-        if (!formData.tarih || (formData.izinTuru === "MAZARET_IZIN" ? !formData.izinSaatAraligi : (!formData.baslangicTarihi || !formData.bitisTarihi)) || !formData.izinGerekcesi || !formData.izinTuru) {
+        if (!formData.tarih || (formData.izinTuru === "MAZARET_IZIN" ? !formData.izinSaatAraligi : (!formData.baslangicTarihi || !formData.bitisTarihi)) || !formData.izinGerekcesi.trim() || !formData.izinTuru) {
             setValidationError("Lütfen tüm zorunlu alanları doldurun.");
             return;
         }
@@ -112,24 +100,23 @@ const LeaveForm = ({ handleViewChange }) => {
             return;
         }
 
+        setBusy(true);
         try {
-            const response = await api.post("/admin", formData, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+            const hourly = formData.izinTuru === "MAZARET_IZIN";
+            await api.post("/admin", {
+                tarih: formData.tarih,
+                izinTuru: formData.izinTuru,
+                izinGerekcesi: formData.izinGerekcesi.trim(),
+                baslangicTarihi: hourly ? null : formData.baslangicTarihi,
+                bitisTarihi: hourly ? null : formData.bitisTarihi,
+                izinSaatAraligi: hourly ? formData.izinSaatAraligi : null,
             });
-
-            if (response.status === 200) {
-                console.log("Leave data submitted successfully.");
-                alert("İzin formu başarıyla gönderildi.");
-                handleViewChange("menu");
-            } else {
-                console.error("Failed to submit leave data.");
-            }
+            alert("İzin formu başarıyla gönderildi.");
+            handleViewChange("menu");
         } catch (error) {
-            console.error("Form gönderiminde hata oluştu:", error);
             setError(error.response?.data?.message || "Form gönderiminde bir hata oluştu.");
+        } finally {
+            setBusy(false);
         }
     };
 
@@ -225,9 +212,9 @@ const LeaveForm = ({ handleViewChange }) => {
                     <label>İzin Gerekçesi :</label>
                     <textarea name="izinGerekcesi" value={formData.izinGerekcesi} onChange={handleChange} maxLength="200"></textarea>
                 </div>
-                {validationError && <p style={{ color: "red" }}>{validationError}</p>}
-                {error && <p style={{ color: "red" }}>{error}</p>}
-                <button type="submit">Gönder</button>
+                {validationError && <p role="alert" style={{ color: "red" }}>{validationError}</p>}
+                {error && <p role="alert" style={{ color: "red" }}>{error}</p>}
+                <button type="submit" disabled={busy}>{busy ? "Gönderiliyor..." : "Gönder"}</button>
             </form>
             <button onClick={handleBackToMenu}>Menüye Dön</button>
         </div>

@@ -9,8 +9,8 @@ A full-stack employee leave-management application developed from my T2 Software
 - Employee registration and login, with server-verified JWT authentication
 - 8 supported leave categories, calendar dates and two-hour excuse slots
 - Server-side leave-duration validation and persistent leave records
-- Employees can view only their own leave requests
-- Administrator can search, filter, approve and reject pending leave requests in bulk
+- Employees can view only their own leave requests and refresh the status list (auto-updates every 30 seconds)
+- Administrator can search, filter, approve and reject pending leave requests in bulk, with atomic updates
 - Account password changes require the current password and invalidate existing tokens
 - React/Vite UI and Java 21 Spring Boot REST API
 
@@ -36,6 +36,9 @@ The API runs on http://localhost:8080. Vite proxies `/api` to the backend. The d
 Environment options in `backend/.env.example` describe PostgreSQL and CORS configuration. The example file is documentation, not an automatically loaded environment; configure environment variables in your shell or deployment system. Do not put actual passwords or JWT keys in Git.
 
 ## Verification
+
+Backend tests supply a dedicated test-only JWT key through test properties. Never use that key for a real deployment.
+
 
 - `cd backend && mvn verify`
 - `cd 1.giris && npm ci && npm run build && npm run lint`
