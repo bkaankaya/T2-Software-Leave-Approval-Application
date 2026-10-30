@@ -8,25 +8,37 @@ import ChangeUserInfo from "./Components/UserSettings/ChangeUserInfo";
 import { checkUserAuthenticated } from "./Components/services/auth";
 
 const App = () => {
+    const [authState, setAuthState] = useState("checking");
+    const [retry, setRetry] = useState(0);
     const [currentView, setCurrentView] = useState("menu");
-    const [authorized, setAuthorized] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         let mounted = true;
-        checkUserAuthenticated().then((valid) => {
+        checkUserAuthenticated().then((result) => {
             if (!mounted) return;
-            if (!valid) {
+            if (result === null) {
+                // A network failure is not an invalid session. Preserve the token.
+                setAuthState("unavailable");
+            } else if (!result) {
                 localStorage.removeItem("token");
                 localStorage.removeItem("isAdmin");
                 localStorage.removeItem("username");
                 navigate("/login", { replace: true });
-            } else setAuthorized(true);
+            } else {
+                setAuthState("authorized");
+            }
         });
         return () => { mounted = false; };
-    }, [navigate]);
+    }, [navigate, retry]);
 
-    if (!authorized) return <div className="App"><p>Oturum doğrulanıyor...</p></div>;
+    if (authState !== "authorized") return (
+        <div className="App" style={{ padding: 24, textAlign: "center" }}>
+            <p>{authState === "unavailable" ? "Sunucuya bağlanılamadı. Backend çalışıyor mu?" : "Oturum doğrulanıyor..."}</p>
+            {authState === "unavailable" && <button type="button" onClick={() => { setAuthState("checking"); setRetry((value) => value + 1); }}>Tekrar Dene</button>}
+        </div>
+    );
+
     const isAdmin = localStorage.getItem("isAdmin") === "true";
     return (
         <div className="App">
