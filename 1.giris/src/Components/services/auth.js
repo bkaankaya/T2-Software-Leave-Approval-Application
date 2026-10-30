@@ -1,5 +1,6 @@
 import api from "../../api";
 
+// true: verified session, false: missing/invalid token, null: server unavailable.
 export const checkUserAuthenticated = async () => {
     if (!localStorage.getItem("token")) return false;
     try {
@@ -9,7 +10,10 @@ export const checkUserAuthenticated = async () => {
         localStorage.setItem("username", response.data.username);
         localStorage.setItem("isAdmin", String(response.data.adminControl === true));
         return true;
-    } catch {
-        return false;
+    } catch (error) {
+        // Only an actual rejection invalidates a session. Offline/timeouts/5xx
+        // should not automatically sign out a user.
+        if ([401, 403].includes(error.response?.status)) return false;
+        return null;
     }
 };
