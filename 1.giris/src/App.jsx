@@ -1,40 +1,40 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./App.css";
 import Menu from "./Components/Menu/Menu";
 import LeaveForm from "./Components/LeaveForm/LeaveForm";
 import LeaveTable from "./Components/Tables/LeaveTable";
-import LoginForm from "./Components/LoginForm/LoginForm";
-import React from "react";
 import ChangeUserInfo from "./Components/UserSettings/ChangeUserInfo";
-import { useNavigate } from "react-router-dom";
+import { checkUserAuthenticated } from "./Components/services/auth";
 
 const App = () => {
     const [currentView, setCurrentView] = useState("menu");
-    const nagivate = useNavigate();
+    const [authorized, setAuthorized] = useState(false);
+    const navigate = useNavigate();
 
-    const handleViewChange = (view) => {
-        setCurrentView(view);
-    };
-
-    const token = localStorage.getItem("token");
     useEffect(() => {
-        if (!token) nagivate("/login");
-    }, [token]);
+        let mounted = true;
+        checkUserAuthenticated().then((valid) => {
+            if (!mounted) return;
+            if (!valid) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("isAdmin");
+                localStorage.removeItem("username");
+                navigate("/login", { replace: true });
+            } else setAuthorized(true);
+        });
+        return () => { mounted = false; };
+    }, [navigate]);
 
-    const isAdmin = localStorage.getItem("isAdmin");
+    if (!authorized) return <div className="App"><p>Oturum doğrulanıyor...</p></div>;
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
     return (
         <div className="App">
-            {currentView === "menu" ? (
-                <Menu isAdmin={isAdmin === "true"} handleViewChange={handleViewChange} />
-            ) : currentView === "userChange" ? (
-                <ChangeUserInfo handleViewChange={handleViewChange} />
-            ) : currentView === "leaveForm" ? (
-                <LeaveForm handleViewChange={handleViewChange} />
-            ) : currentView === "leaveTable" ? (
-                <LeaveTable isAdmin={isAdmin === "true"} handleViewChange={handleViewChange} />
-            ) : null}
+            {currentView === "menu" && <Menu isAdmin={isAdmin} handleViewChange={setCurrentView} />}
+            {currentView === "userChange" && <ChangeUserInfo handleViewChange={setCurrentView} />}
+            {currentView === "leaveForm" && <LeaveForm handleViewChange={setCurrentView} />}
+            {currentView === "leaveTable" && <LeaveTable isAdmin={isAdmin} handleViewChange={setCurrentView} />}
         </div>
     );
 };
-
 export default App;

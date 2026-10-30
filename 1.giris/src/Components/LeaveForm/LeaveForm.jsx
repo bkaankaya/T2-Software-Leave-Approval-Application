@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api";
 import "./LeaveForm.css";
 
 const LeaveForm = ({ handleViewChange }) => {
     const [formData, setFormData] = useState({
-        personel: { username: localStorage.getItem("username") },
         adSoyad: "",
         tarih: "",
         izinTuru: undefined,
@@ -100,7 +99,7 @@ const LeaveForm = ({ handleViewChange }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.tarih || (!formData.baslangicTarihi && !formData.izinSaatAraligi) || !formData.izinGerekcesi || !formData.izinTuru) {
+        if (!formData.tarih || (formData.izinTuru === "MAZARET_IZIN" ? !formData.izinSaatAraligi : (!formData.baslangicTarihi || !formData.bitisTarihi)) || !formData.izinGerekcesi || !formData.izinTuru) {
             setValidationError("Lütfen tüm zorunlu alanları doldurun.");
             return;
         }
@@ -113,7 +112,7 @@ const LeaveForm = ({ handleViewChange }) => {
         }
 
         try {
-            const response = await axios.post("http://localhost:8080/api/admin", formData, {
+            const response = await api.post("/admin", formData, {
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
@@ -129,7 +128,7 @@ const LeaveForm = ({ handleViewChange }) => {
             }
         } catch (error) {
             console.error("Form gönderiminde hata oluştu:", error);
-            setError("Form gönderiminde bir hata oluştu.");
+            setError(error.response?.data?.message || "Form gönderiminde bir hata oluştu.");
         }
     };
 

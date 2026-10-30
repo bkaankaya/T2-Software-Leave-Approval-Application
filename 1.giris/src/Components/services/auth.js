@@ -1,23 +1,11 @@
-
-import axios from 'axios';
+import api from "../../api";
 
 export const checkUserAuthenticated = async () => {
+    if (!localStorage.getItem("token")) return false;
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            return false;
-        }
-
-        const response = await axios.get('http://localhost:8080/api/auth/verify-token', {  
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        return response.status === 200;
-    } catch (error) {
-        console.error('Token validation error', error);
+        const response = await api.get("/auth/verify-token");
+        return response.status === 200 && response.data?.valid === true;
+    } catch {
         return false;
     }
 };
- 
