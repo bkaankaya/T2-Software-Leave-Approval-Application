@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import signal
 import shutil
 import socket
 import subprocess
@@ -22,6 +23,14 @@ ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
 FRONTEND = ROOT / "1.giris"
 LOCAL_ENV = BACKEND / ".env.local"
+
+
+def tool(name: str) -> str:
+    """Resolve .cmd shims on Windows instead of assuming POSIX executables."""
+    path = shutil.which(name)
+    if path is None:
+        raise RuntimeError(f"Missing executable: {name}")
+    return path
 
 
 def command_output(command: list[str]) -> str:
@@ -39,21 +48,21 @@ def prerequisites() -> None:
     if missing:
         raise RuntimeError("Missing prerequisites: " + ", ".join(missing) +
                            ". Install Java 21, Maven 3.9+ and Node.js 22.12+ first.")
-    java = command_output(["java", "-version"])
+    java = command_output([tool("java"), "-version"])
     match = re.search(r'version "(\d+)', java)
     if not match or int(match.group(1)) < 21:
         raise RuntimeError("Java 21+ is required. Detected: " + java.splitlines()[0])
-    maven = command_output(["mvn", "-version"])
+    maven = command_output([tool("mvn"), "-version"])
     match = re.search(r"Apache Maven (\d+)\.(\d+)", maven)
     if not match or (int(match.group(1)), int(match.group(2))) < (3, 9):
         raise RuntimeError("Maven 3.9+ is required. Detected: " + maven.splitlines()[0])
-    node = command_output(["node", "--version"])
+    node = command_output([tool("node"), "--version"])
     match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", node)
     if not match:
         raise RuntimeError("Unrecognized Node.js version: " + node)
     major, minor = int(match.group(1)), int(match.group(2))
-    if not ((major == 20 and minor >= 19) or (major >= 22 and (major != 22 or minor >= 12))):
-        raise RuntimeError("Vite requires Node.js 20.19+ or 22.12+. Detected: " + node)
+    if major < 22 or (major == 22 and minor < 12):
+        raise RuntimeError("This project requires Node.js 22.12+ (prefer Node 22 LTS). Detected: " + node)
 
 
 def local_environment() -> dict[str, str]:
@@ -92,7 +101,13 @@ def assert_free(port: int) -> None:
 def stop(process: subprocess.Popen | None) -> None:
     if process is None or process.poll() is not None:
         return
-    process.terminate()
+    if os.name == "nt":
+        # Stopping a .cmd wrapper alone does not terminate its Java/Node child.
+        subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                       capture_output=True, check=False, timeout=10)
+    else:
+        # Maven can launch a child JVM; kill the isolated process group.
+        os.killpg(process.pid, signal.SIGTERM)
     try:
         process.wait(timeout=7)
     except subprocess.TimeoutExpired:
@@ -110,15 +125,15 @@ def run() -> int:
     env = local_environment()
     if args.clean or not (FRONTEND / "node_modules").is_dir():
         print("Installing locked frontend dependencies (npm ci)...", flush=True)
-        subprocess.run(["npm", "ci"], cwd=FRONTEND, check=True, env=env)
+        subprocess.run([tool("npm"), "ci"], cwd=FRONTEND, check=True, env=env)
     if args.check:
         print("Running backend tests, frontend tests, lint, build and audit...", flush=True)
         for cmd, directory in (
-            (["mvn", "-B", "verify"], BACKEND),
-            (["npm", "run", "test"], FRONTEND),
-            (["npm", "run", "lint"], FRONTEND),
-            (["npm", "run", "build"], FRONTEND),
-            (["npm", "audit", "--audit-level=high"], FRONTEND),
+            ([tool("mvn"), "-B", "verify"], BACKEND),
+            ([tool("npm"), "run", "test"], FRONTEND),
+            ([tool("npm"), "run", "lint"], FRONTEND),
+            ([tool("npm"), "run", "build"], FRONTEND),
+            ([tool("npm"), "audit", "--audit-level=high"], FRONTEND),
         ):
             subprocess.run(cmd, cwd=directory, env=env, check=True)
         print("All checks passed.")
@@ -130,10 +145,11 @@ def run() -> int:
     try:
         print("Starting API at http://localhost:8080 and UI at http://localhost:3000", flush=True)
         print("Ctrl+C stops both services. Registration creates employee accounts.", flush=True)
-        backend = subprocess.Popen(["mvn", "spring-boot:run"], cwd=BACKEND, env=env)
+        backend = subprocess.Popen([tool("mvn"), "spring-boot:run"], cwd=BACKEND, env=env,
+                                   start_new_session=(os.name != "nt"))
         frontend = subprocess.Popen(
-            ["npm", "run", "start", "--", "--host", "127.0.0.1", "--strictPort"],
-            cwd=FRONTEND, env=env,
+            [tool("npm"), "run", "start", "--", "--host", "127.0.0.1", "--strictPort"],
+            cwd=FRONTEND, env=env, start_new_session=(os.name != "nt"),
         )
         while True:
             if backend.poll() is not None:
