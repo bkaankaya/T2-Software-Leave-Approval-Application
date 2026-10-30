@@ -13,7 +13,7 @@ const Menu = ({ isAdmin, handleViewChange }) => {
     return (
         <div className="menu-container">
             <h2>Menü</h2>
-            {!isAdmin && <button onClick={() => handleViewChange("userChange")}>Şifre Değiştir</button>}
+            <button onClick={() => handleViewChange("userChange")}>Şifre Değiştir</button>
             {!isAdmin && <button onClick={() => handleViewChange("leaveForm")}>İzin Oluştur</button>}
             {!isAdmin && <button onClick={() => handleViewChange("leaveTable")}>İzinlerim</button>}
             {isAdmin && <button onClick={() => handleViewChange("leaveTable")}>İzin Yönetimi</button>}

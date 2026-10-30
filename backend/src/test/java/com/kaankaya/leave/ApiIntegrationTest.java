@@ -97,4 +97,65 @@ class ApiIntegrationTest {
         assertEquals(200, call("POST", "/api/login",
             "{\"username\":\"" + username + "\",\"password\":\"NewPassword1234!\"}", null).statusCode());
     }
+    @Test
+    void registrationAndAuthenticationAreValidated() throws Exception {
+        String username = "test" + UUID.randomUUID().toString().substring(0, 8);
+        assertEquals(400, call("POST", "/api/login/register",
+            "{\"username\":\"bad/name\",\"email\":\"bad@test.invalid\",\"password\":\"UserPassword1234!\"}", null).statusCode());
+        assertEquals(400, call("POST", "/api/login/register",
+            "{\"username\":\"xy\",\"email\":\"bad@test.invalid\",\"password\":\"UserPassword1234!\"}", null).statusCode());
+        assertEquals(400, call("POST", "/api/login/register",
+            "{\"username\":\"validname\",\"email\":\"not-an-email\",\"password\":\"UserPassword1234!\"}", null).statusCode());
+        String register = "{\"username\":\"" + username + "\",\"email\":\"" + username +
+            "@test.invalid\",\"password\":\"UserPassword1234!\"}";
+        assertEquals(201, call("POST", "/api/login/register", register, null).statusCode());
+        assertEquals(409, call("POST", "/api/login/register", register, null).statusCode());
+        assertEquals(401, call("POST", "/api/login", "{\"username\":\"" + username +
+            "\",\"password\":\"not-the-password\"}", null).statusCode());
+        HttpResponse<String> login = call("POST", "/api/login",
+            "{\"username\":\"" + username + "\",\"password\":\"UserPassword1234!\"}", null);
+        String token = capture(login.body(), "token");
+        HttpResponse<String> verified = call("GET", "/api/auth/verify-token", null, token);
+        assertEquals(200, verified.statusCode());
+        assertTrue(verified.body().contains("\"adminControl\":false"));
+    }
+
+    @Test
+    void bulkActionsRejectInvalidIdsWithoutPartialUpdates() throws Exception {
+        String username = "user" + UUID.randomUUID().toString().substring(0, 8);
+        assertEquals(201, call("POST", "/api/login/register",
+            "{\"username\":\"" + username + "\",\"email\":\"" + username +
+                "@test.invalid\",\"password\":\"UserPassword1234!\"}", null).statusCode());
+        String userToken = capture(call("POST", "/api/login",
+            "{\"username\":\"" + username + "\",\"password\":\"UserPassword1234!\"}", null).body(), "token");
+        String adminToken = capture(call("POST", "/api/login",
+            "{\"username\":\"testadmin\",\"password\":\"SecureAdminPassword1234!\"}", null).body(), "token");
+        String leave = "{\"tarih\":\"2026-10-30\",\"izinTuru\":\"MAZARET_IZIN\"," +
+            "\"izinSaatAraligi\":\"08:00 - 10:00\",\"baslangicTarihi\":\"2026-12-01\"," +
+            "\"bitisTarihi\":\"2026-12-02\",\"izinGerekcesi\":\"Hourly request\"}";
+        HttpResponse<String> created = call("POST", "/api/admin", leave, userToken);
+        assertEquals(200, created.statusCode(), created.body());
+        String id = capture(created.body(), "id");
+        assertTrue(created.body().contains("\"izinSuresi\":\"2\""));
+        assertTrue(created.body().contains("\"baslangicTarihi\":null"));
+        assertEquals(400, call("POST", "/api/admin/approve-leaves",
+            "{\"leaveIds\":[" + id + "," + id + "]}", adminToken).statusCode());
+        assertEquals(400, call("POST", "/api/admin/approve-leaves",
+            "{\"leaveIds\":[-1]}", adminToken).statusCode());
+        assertEquals(400, call("POST", "/api/admin/approve-leaves",
+            "{\"leaveIds\":[]}", adminToken).statusCode());
+        assertEquals(404, call("POST", "/api/admin/approve-leaves",
+            "{\"leaveIds\":[" + id + ",999999999]}", adminToken).statusCode());
+        assertTrue(call("GET", "/api/leave/" + username, null, userToken).body().contains("Beklemede"));
+        assertEquals(200, call("POST", "/api/admin/reject-leaves",
+            "{\"leaveIds\":[" + id + "]}", adminToken).statusCode());
+        assertTrue(call("GET", "/api/leave/" + username, null, userToken).body().contains("Reddedildi"));
+        assertEquals(409, call("POST", "/api/admin/approve-leaves",
+            "{\"leaveIds\":[" + id + "]}", adminToken).statusCode());
+        HttpResponse<String> invalidSlot = call("POST", "/api/admin",
+            "{\"tarih\":\"2026-10-30\",\"izinTuru\":\"MAZARET_IZIN\"," +
+            "\"izinSaatAraligi\":\"00:00 - 23:59\",\"izinGerekcesi\":\"invalid\"}", userToken);
+        assertEquals(400, invalidSlot.statusCode(), invalidSlot.body());
+    }
+
 }
