@@ -3,14 +3,13 @@ body {
 }
 
 .izin-formu-container {
-    width: 80%; 
-    margin: 20px;
-    background-color: white; 
-    padding: 10px; 
-    border-radius: 10px; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    width: min(850px, calc(100vw - 32px));
+    margin: 20px auto;
+    background-color: white;
+    padding: clamp(16px, 3vw, 28px);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
-    max-height: 90vh; 
 }
 
 .form-header {
@@ -54,7 +53,7 @@ body {
     margin-right: 10px;
 }
 
-button {
+.izin-formu-container button {
     padding: 10px;
     background-color: #007bff;
     color: white;
@@ -63,7 +62,7 @@ button {
     cursor: pointer;
 }
 
-button:hover {
+.izin-formu-container button:hover {
     background-color: #0056b3;
 }
 

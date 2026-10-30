@@ -9,32 +9,48 @@ import { checkUserAuthenticated } from "./Components/services/auth";
 
 const App = () => {
     const [currentView, setCurrentView] = useState("menu");
-    const [authorized, setAuthorized] = useState(false);
+    const [sessionStatus, setSessionStatus] = useState("loading");
+    const [attempt, setAttempt] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
         let mounted = true;
-        checkUserAuthenticated().then((valid) => {
+        checkUserAuthenticated().then((result) => {
             if (!mounted) return;
-            if (!valid) {
+            if (result === "invalid") {
                 localStorage.removeItem("token");
                 localStorage.removeItem("isAdmin");
                 localStorage.removeItem("username");
                 navigate("/login", { replace: true });
-            } else setAuthorized(true);
+            } else {
+                setSessionStatus(result);
+            }
+        }).catch(() => {
+            if (mounted) setSessionStatus("unavailable");
         });
         return () => { mounted = false; };
-    }, [navigate]);
+    }, [navigate, attempt]);
 
-    if (!authorized) return <div className="App"><p>Oturum doğrulanıyor...</p></div>;
+    if (sessionStatus === "unavailable") {
+        return <main className="App session-message" role="alert">
+            <h2>Sunucuya bağlanılamadı</h2>
+            <p>Oturumun korundu. Backend çalışıyorsa tekrar deneyebilirsin.</p>
+            <button type="button" onClick={() => { setSessionStatus("loading"); setAttempt((v) => v + 1); }}>
+                Tekrar Dene
+            </button>
+        </main>;
+    }
+    if (sessionStatus !== "valid") {
+        return <main className="App session-message"><p>Oturum doğrulanıyor...</p></main>;
+    }
     const isAdmin = localStorage.getItem("isAdmin") === "true";
     return (
-        <div className="App">
+        <main className="App">
             {currentView === "menu" && <Menu isAdmin={isAdmin} handleViewChange={setCurrentView} />}
             {currentView === "userChange" && <ChangeUserInfo handleViewChange={setCurrentView} />}
             {currentView === "leaveForm" && <LeaveForm handleViewChange={setCurrentView} />}
             {currentView === "leaveTable" && <LeaveTable isAdmin={isAdmin} handleViewChange={setCurrentView} />}
-        </div>
+        </main>
     );
 };
 export default App;
