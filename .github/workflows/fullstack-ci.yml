@@ -3,6 +3,8 @@ on:
   push:
     branches: [main, 'feat/**', 'fix/**']
   pull_request:
+permissions:
+  contents: read
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -10,7 +12,7 @@ jobs:
       run:
         working-directory: backend
     env:
-      JWT_SECRET: dGVzdC1vbmx5LWNpLWtleS1maXh0dXJlLTAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbg==
+      JWT_SECRET: dGVzdC1vbmx5LWNpLWtleS1maXh0dJlLTAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbg==
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -36,3 +38,27 @@ jobs:
       - run: npm run build
       - run: npm run lint
       - run: npm audit --audit-level=high
+  windows-local-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Check Windows local startup prerequisites
+        shell: powershell
+        run: .\scripts\start-local.ps1 -CheckOnly
+      - name: Verify frontend build on Windows
+        working-directory: 1.giris
+        shell: powershell
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run lint
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
