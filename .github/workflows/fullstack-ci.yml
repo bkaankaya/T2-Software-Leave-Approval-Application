@@ -32,14 +32,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: 1.giris/package-lock.json
-      - name: Refresh frontend dependency lock for review
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit
-          npm audit fix --package-lock-only --ignore-scripts || true
-          echo AUDIT_LOCK_BEGIN_20261030
-          cat package-lock.json
-          echo AUDIT_LOCK_END_20261030
       - run: npm ci
       - run: npm run build
       - run: npm run lint
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high

@@ -17,7 +17,7 @@ A full-stack employee leave-management application developed from my T2 Software
 ## Prerequisites
 
 - Java 21 and Maven 3.9+
-- Node.js 22 and npm
+- Node.js 22.12+ and npm
 
 ## Local development
 
@@ -43,7 +43,7 @@ Backend tests supply a dedicated test-only JWT key through test properties. Neve
 - `cd backend && mvn verify`
 - `cd 1.giris && npm ci && npm run build && npm run lint`
 
-The GitHub Actions workflow performs these checks on pull requests and pushes.
+The GitHub Actions workflow performs these checks and a full npm dependency vulnerability audit on pull requests and pushes.
 
 ## API
 
