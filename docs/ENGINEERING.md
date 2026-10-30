@@ -44,6 +44,8 @@ The backend uses a **real embedded HTTP server on a random port** for three Spri
 
 The GitHub workflow explicitly grants **contents:read** and pins standard actions to verified full Git commit SHAs. This limits token privileges and prevents mutable version tags from silently changing workflow code.
 
+A separate **local-smoke** Actions job launches both services from a clean checkout and requests the Vite homepage and the proxied unauthenticated API (expected HTTP 200 and 401). This verifies actual startup rather than only compilation.
+
 These automated tests do not exercise the full React DOM in a browser, parallel account registration, a real PostgreSQL instance, production HTTPS, or performance under concurrent load. Those require separate integration, browser and load test environments.
 
 ## Configuration

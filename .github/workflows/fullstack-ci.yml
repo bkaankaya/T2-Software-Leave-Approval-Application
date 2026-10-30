@@ -45,3 +45,24 @@ jobs:
       - run: npm run build
       - run: npm run lint
       - run: npm audit --audit-level=high
+
+  local-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: 1.giris/package-lock.json
+      - name: Verify real local startup and Vite API proxy
+        run: |
+          python3 -m py_compile scripts/dev.py scripts/smoke_local.py
+          python3 scripts/smoke_local.py

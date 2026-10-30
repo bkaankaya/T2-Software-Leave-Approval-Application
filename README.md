@@ -58,7 +58,7 @@ Persistent local data uses an H2 database in **backend/data/**. That directory a
 python scripts/dev.py --check
 ~~~
 
-This runs Maven tests, Node unit tests, frontend build, ESLint and npm dependency audit. To force a new installation from the frontend lockfile, run **python scripts/dev.py --clean**.
+This runs Maven tests, Node unit tests, frontend build, ESLint and npm dependency audit. GitHub Actions also smoke-tests an actual clean-clone launch of both services and the Vite API proxy. To force a new installation from the frontend lockfile, run **python scripts/dev.py --clean**.
 
 You can also run services separately after exporting a secure **JWT_SECRET**:
 
